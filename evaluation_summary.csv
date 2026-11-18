@@ -1,0 +1,14 @@
+file,true_hz,measured_hz,reliable,concentration,snr,duration_s,fs_hz,rms_cm,warnings,verdict
+tremor_data_20261027_014340.csv,,2.52,True,0.87,395.2,13.6,31.3,,,
+tremor_data_20261027_014611.csv,,6.26,False,0.15,2.3,17.8,31.3,,,
+tremor_rest_20261027_074938.csv,,4.33,False,0.17,2.9,17.9,31.4,0.035,,
+tremor_rest_20261027_075219.csv,,2.47,False,0.14,2.6,17.9,31.2,0.036,,
+tremor_rest_20261027_075824.csv,,4.8,False,0.26,12.9,17.9,31.2,0.168,,
+tremor_rest_20261027_155209.csv,,3.0,True,0.63,118.0,17.9,31.3,0.609,,
+tremor_rest_20261027_155431.csv,,,,,,,,,,ERROR: Only 0 valid samples. Record longer with the hand visible.
+tremor_rest_20261027_155507.csv,,4.01,True,0.61,59.7,18.0,31.4,0.473,,
+tremor_rest_20261027_155733.csv,,5.97,False,0.28,6.9,18.0,31.3,0.428,,
+tremor_rest_20261027_155813.csv,,4.59,False,0.32,10.6,18.0,31.2,0.528,,
+tremor_rest_20261027_183519.csv,,3.13,False,0.17,3.3,18.0,31.4,0.055,,
+tremor_rest_20261027_184347.csv,,2.99,True,0.57,98.3,18.0,31.3,0.237,,
+tremor_rest_20261027_184656.csv,,5.01,True,0.76,128.5,17.9,31.2,0.647,,

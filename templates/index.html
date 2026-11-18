@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tremor Vision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      surface: "#f8f9ff", "surface-low": "#eff4ff", "surface-mid": "#e5eeff", "surface-high": "#dce9ff",
+      ink: "#0b1c30", "ink-soft": "#45464d", teal: "#006a61", "teal-soft": "#86f2e4",
+      "teal-ink": "#006f66", navy: "#131b2e", danger: "#ba1a1a"
+    },
+    fontFamily: { body: ["Inter", "sans-serif"], head: ["Plus Jakarta Sans", "sans-serif"] }
+  } }
+};
+</script>
+<style>
+  body { overscroll-behavior: none; }
+  ::-webkit-scrollbar { display: none; }
+  .screen { display: none; }
+  .screen.active { display: flex; }
+  .nav-btn.active { background: #dce9ff; color: #0b1c30; }
+  .seg.active { background: #006a61; color: #fff; }
+  .btn-navy { background: #131b2e; color: #fff; }
+  .btn-danger { background: #ba1a1a; color: #fff; }
+  button:disabled { opacity: .5; }
+  .material-symbols-outlined { font-size: 22px; line-height: 1; }
+</style>
+</head>
+<body class="bg-surface font-body text-ink text-sm lg:text-base min-h-screen">
+
+<!-- top bar (desktop navigation lives here) -->
+<header class="fixed top-0 inset-x-0 z-40 bg-surface/90 backdrop-blur">
+  <div class="bg-surface-high/70 px-4 py-1 flex items-center justify-center gap-1 text-[11px] lg:text-xs text-ink-soft">
+    <span class="material-symbols-outlined text-teal" style="font-size:14px">verified_user</span>
+    Investigational measurement prototype. Not an automated diagnostic tool.
+  </div>
+  <div class="h-14 lg:h-16 px-4 lg:px-8 flex items-center justify-between max-w-[1600px] mx-auto">
+    <div class="flex flex-col">
+      <h1 id="screenTitle" class="font-head font-semibold text-lg lg:text-xl leading-tight">Tremor Vision</h1>
+      <span class="text-[11px] text-teal font-medium flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-teal"></span>Prototype
+      </span>
+    </div>
+    <nav class="hidden lg:flex gap-1">
+      <button class="nav-btn rounded-xl px-4 py-2 flex items-center gap-2 text-ink-soft" data-tab="dashboard">
+        <span class="material-symbols-outlined">dashboard</span><span class="font-medium">Dashboard</span></button>
+      <button class="nav-btn rounded-xl px-4 py-2 flex items-center gap-2 text-ink-soft" data-tab="assess">
+        <span class="material-symbols-outlined">videocam</span><span class="font-medium">Assess</span></button>
+      <button class="nav-btn rounded-xl px-4 py-2 flex items-center gap-2 text-ink-soft" data-tab="results">
+        <span class="material-symbols-outlined">monitoring</span><span class="font-medium">Results</span></button>
+      <button class="nav-btn rounded-xl px-4 py-2 flex items-center gap-2 text-ink-soft" data-tab="records">
+        <span class="material-symbols-outlined">folder</span><span class="font-medium">Records</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="pt-28 lg:pt-28 pb-28 lg:pb-12 px-4 lg:px-8 max-w-[1600px] mx-auto">
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="screen-dashboard" class="screen active flex-col gap-4">
+    <div class="grid gap-4 lg:grid-cols-2 lg:gap-8 lg:items-start">
+      <div class="flex flex-col gap-4">
+        <div>
+          <h2 class="font-head font-bold text-3xl lg:text-5xl leading-tight">Welcome</h2>
+          <p class="text-ink-soft mt-1 lg:mt-2 lg:text-lg">Measure hand tremor frequency from a webcam recording.</p>
+        </div>
+
+        <div class="bg-surface-mid rounded-2xl p-4 lg:p-6">
+          <div class="text-xs font-semibold text-teal uppercase tracking-wide">Tremor Vision</div>
+          <p class="text-ink-soft mt-1">Measures the dominant frequency (Hz) and size of hand movement.
+            It reports a frequency and how reliable the peak is. It does not diagnose any disease.</p>
+        </div>
+
+        <button data-go="assess" class="go w-full rounded-2xl bg-navy text-white p-5 lg:p-7 flex items-center justify-between text-left active:scale-[0.99] transition">
+          <span>
+            <span class="block font-head font-semibold text-lg lg:text-2xl">Start New Assessment</span>
+            <span class="block text-xs lg:text-sm opacity-70 mt-0.5">Record with the webcam</span>
+          </span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3 lg:gap-4">
+          <div class="bg-surface-low rounded-2xl p-4 lg:p-6">
+            <div class="text-[11px] lg:text-xs font-semibold uppercase tracking-wide text-ink-soft">Total tests</div>
+            <div id="statTotal" class="font-head font-semibold text-3xl lg:text-5xl mt-1">0</div>
+          </div>
+          <div class="bg-surface-low rounded-2xl p-4 lg:p-6">
+            <div class="text-[11px] lg:text-xs font-semibold uppercase tracking-wide text-ink-soft">Last frequency</div>
+            <div id="statLast" class="font-head font-semibold text-3xl lg:text-5xl mt-1">--</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-low rounded-2xl p-4 lg:p-6">
+          <h3 class="font-head font-semibold text-lg mb-2">Recent tests</h3>
+          <div id="recentList" class="flex flex-col gap-2">
+            <p id="recentEmpty" class="text-ink-soft">No assessments yet. Start one and it will appear here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ASSESS ================= -->
+  <section id="screen-assess" class="screen flex-col gap-4">
+    <div class="grid gap-4 lg:grid-cols-5 lg:gap-8 lg:items-start">
+
+      <!-- left: camera -->
+      <div class="flex flex-col gap-4 lg:col-span-3">
+        <div id="camBox" class="relative w-full rounded-2xl overflow-hidden bg-navy" style="aspect-ratio: 4 / 3">
+          <div id="mirrorWrap" class="absolute inset-0" style="transform: scaleX(-1)">
+            <video id="video" class="w-full h-full object-contain" playsinline muted autoplay></video>
+            <canvas id="overlay" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+          <div id="camPlaceholder" class="absolute inset-0 flex items-center justify-center text-center p-6 text-white/80">
+            <div>
+              <span class="material-symbols-outlined" style="font-size:40px">videocam_off</span>
+              <p class="mt-2">Press "Enable camera" to start the preview</p>
+            </div>
+          </div>
+          <div id="camBadge" class="hidden absolute top-3 left-3 items-center gap-1.5 bg-navy/90 text-white rounded-full px-3 py-1 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-danger animate-pulse inline-block"></span>
+            REC <span id="recTime" class="font-normal opacity-90">00:00 / 00:20</span>
+          </div>
+          <div id="countdown" class="hidden absolute inset-0 items-center justify-center text-white font-head font-bold bg-navy/40" style="font-size:96px"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 lg:gap-4 text-center">
+          <div class="bg-surface-mid rounded-xl p-2 lg:p-3"><div class="text-[11px] lg:text-xs font-semibold text-teal">Lighting</div><div id="pillLight" class="text-xs lg:text-sm mt-0.5">--</div></div>
+          <div class="bg-surface-mid rounded-xl p-2 lg:p-3"><div class="text-[11px] lg:text-xs font-semibold text-teal">Hand in frame</div><div id="pillHand" class="text-xs lg:text-sm mt-0.5">--</div></div>
+          <div class="bg-surface-mid rounded-xl p-2 lg:p-3"><div class="text-[11px] lg:text-xs font-semibold text-teal">Frame rate</div><div id="pillFps" class="text-xs lg:text-sm mt-0.5">--</div></div>
+        </div>
+      </div>
+
+      <!-- right: controls -->
+      <div class="flex flex-col gap-4 lg:col-span-2">
+        <div class="bg-surface-low rounded-2xl p-4">
+          <div class="text-xs font-semibold uppercase tracking-wide text-ink-soft mb-2">Test type</div>
+          <div class="grid grid-cols-3 gap-2" id="protocolSeg">
+            <button class="seg active rounded-lg py-2 font-medium bg-surface-mid" data-p="rest">Rest</button>
+            <button class="seg rounded-lg py-2 font-medium bg-surface-mid" data-p="postural">Postural</button>
+            <button class="seg rounded-lg py-2 font-medium bg-surface-mid" data-p="kinetic">Kinetic</button>
+          </div>
+        </div>
+
+        <div class="bg-surface-low rounded-2xl p-4">
+          <div class="text-xs font-semibold uppercase tracking-wide text-teal">Instruction</div>
+          <h3 id="protoTitle" class="font-head font-semibold text-lg mt-0.5">Rest tremor</h3>
+          <p id="protoText" class="text-ink-soft mt-0.5">Rest the forearm on a support, palm down, hand relaxed. Do not move it for the whole recording.</p>
+
+          <div id="progressWrap" class="hidden mt-3">
+            <div class="flex items-center justify-between text-xs">
+              <span id="progressText" class="font-semibold">0% completed</span>
+              <span id="remainText" class="text-teal font-bold">00:20 remaining</span>
+            </div>
+            <div class="w-full h-2.5 bg-surface-high rounded-full overflow-hidden mt-1">
+              <div id="progressBar" class="h-full bg-teal rounded-full" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button id="mainBtn" class="btn-navy rounded-xl py-3 font-semibold">Enable camera</button>
+          <button id="btnHand" class="rounded-xl bg-surface-mid py-3 font-medium">Hand: <strong class="text-teal" id="handLabel">RIGHT</strong></button>
+          <button id="btnCam" class="col-span-2 rounded-xl bg-surface-mid py-3 font-medium">Camera: <strong class="text-teal" id="camLabel">FRONT</strong> (tap to switch)</button>
+        </div>
+
+        <label class="flex items-center justify-between bg-surface-low rounded-xl px-4 py-2">
+          <span class="font-medium">Recording length</span>
+          <select id="durSel" class="bg-surface-mid rounded-lg px-2 py-1">
+            <option value="15">15 s</option>
+            <option value="20" selected>20 s</option>
+            <option value="30">30 s</option>
+          </select>
+        </label>
+
+        <p id="statusMsg" class="text-xs lg:text-sm text-ink-soft text-center min-h-[1rem]"></p>
+        <p id="diagLine" class="text-[11px] lg:text-xs text-ink-soft text-center min-h-[1rem]"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RESULTS ================= -->
+  <section id="screen-results" class="screen flex-col gap-4">
+    <div id="resultsEmpty" class="bg-surface-low rounded-2xl p-5 lg:p-10 text-center max-w-xl mx-auto w-full">
+      <span class="material-symbols-outlined text-ink-soft" style="font-size:36px">query_stats</span>
+      <h3 class="font-head font-semibold text-lg mt-1">No result yet</h3>
+      <p class="text-ink-soft mt-1">Run an assessment and the measured frequency, reliability and charts will show here.</p>
+      <button data-go="assess" class="go mt-3 rounded-xl bg-navy text-white px-5 py-2 font-semibold">Start assessment</button>
+    </div>
+
+    <div id="resultsBody" class="hidden flex-col gap-4">
+      <div class="grid gap-4 lg:grid-cols-5 lg:gap-8 lg:items-start">
+
+        <div class="flex flex-col gap-4 lg:col-span-2">
+          <div class="bg-surface-low rounded-2xl p-5 lg:p-6">
+            <div class="text-[11px] lg:text-xs font-semibold uppercase tracking-wide text-ink-soft">Measured tremor frequency</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span id="resFreq" class="font-head font-bold text-5xl lg:text-6xl">--</span>
+              <span id="resUnit" class="text-xl text-ink-soft">Hz</span>
+            </div>
+            <div id="resBadge" class="inline-block mt-2 rounded-full px-3 py-1 text-xs font-semibold"></div>
+            <h3 id="resTitle" class="font-head font-semibold text-base mt-3"></h3>
+            <p id="resMeaning" class="text-ink-soft mt-1"></p>
+            <p id="resNext" class="text-ink-soft mt-1"></p>
+          </div>
+
+          <div id="resMetrics" class="grid grid-cols-2 gap-3"></div>
+          <div id="resWarnings" class="hidden bg-surface-high rounded-2xl p-3 text-xs lg:text-sm text-ink flex-col gap-1"></div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnDownload" class="rounded-xl bg-surface-mid py-3 font-medium">Download CSV</button>
+            <button id="btnAgain" class="btn-navy rounded-xl py-3 font-semibold">New test</button>
+          </div>
+          <p id="resFoot" class="text-[11px] lg:text-xs text-ink-soft text-center"></p>
+        </div>
+
+        <div id="resCharts" class="flex flex-col gap-4 lg:col-span-3">
+          <div class="bg-surface-low rounded-2xl p-6 text-center text-ink-soft">
+            Waveform and spectrum charts will appear here.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RECORDS ================= -->
+  <section id="screen-records" class="screen flex-col gap-4">
+    <div class="max-w-3xl mx-auto w-full flex flex-col gap-3">
+      <p class="text-ink-soft text-sm">Every completed test is saved on this computer (no names or personal data). Tap a record to reopen its results and charts.</p>
+      <div id="recordsList" class="flex flex-col gap-2"></div>
+      <div id="recordsEmpty" class="bg-surface-low rounded-2xl p-5 lg:p-10 text-center">
+        <span class="material-symbols-outlined text-ink-soft" style="font-size:36px">folder_open</span>
+        <h3 class="font-head font-semibold text-lg mt-1">No saved records</h3>
+        <p class="text-ink-soft mt-1">Complete a test and it will be saved here automatically.</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-[11px] lg:text-xs text-ink-soft text-center mt-6 lg:mt-10">
+    Research prototype. Provides movement measurements only and does not diagnose Parkinson's disease or any other condition.
+  </p>
+</main>
+
+<!-- bottom navigation (phones only) -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface/95 backdrop-blur border-t border-surface-high">
+  <div class="max-w-xl mx-auto grid grid-cols-4 gap-1 p-2">
+    <button class="nav-btn rounded-xl py-2 flex flex-col items-center text-ink-soft" data-tab="dashboard">
+      <span class="material-symbols-outlined">dashboard</span><span class="text-[11px] font-medium">Dashboard</span></button>
+    <button class="nav-btn rounded-xl py-2 flex flex-col items-center text-ink-soft" data-tab="assess">
+      <span class="material-symbols-outlined">videocam</span><span class="text-[11px] font-medium">Assess</span></button>
+    <button class="nav-btn rounded-xl py-2 flex flex-col items-center text-ink-soft" data-tab="results">
+      <span class="material-symbols-outlined">monitoring</span><span class="text-[11px] font-medium">Results</span></button>
+    <button class="nav-btn rounded-xl py-2 flex flex-col items-center text-ink-soft" data-tab="records">
+      <span class="material-symbols-outlined">folder</span><span class="text-[11px] font-medium">Records</span></button>
+  </div>
+</nav>
+
+<script>
+(function () {
+  function banner(msg) {
+    var d = document.getElementById("errBanner");
+    if (!d) {
+      d = document.createElement("div");
+      d.id = "errBanner";
+      d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#ba1a1a;color:#fff;padding:10px 14px;font:13px/1.4 system-ui,sans-serif;white-space:pre-wrap";
+      document.body.appendChild(d);
+    }
+    d.textContent = msg;
+  }
+  window.addEventListener("error", function (e) {
+    banner("JavaScript error: " + e.message + (e.filename ? "\n" + e.filename.split("/").pop() + ":" + e.lineno : ""));
+  });
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      if (typeof window.showTab !== "function") {
+        banner("app.js did not load. Check that static/app.js exists, then refresh with Ctrl+Shift+R.");
+      }
+    }, 800);
+  });
+})();
+</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

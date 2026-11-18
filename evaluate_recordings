@@ -1,0 +1,120 @@
+"""
+TremorVision - batch evaluation of recordings (research prototype)
+
+Runs the analyzer on every CSV in a folder and prints one table:
+measured frequency, reliability, and the error against the known true frequency.
+
+The true frequency is read from the FILE NAME, e.g.
+    rest_180bpm.csv   -> 3.0 Hz   (bpm / 60)
+    rest_5hz.csv      -> 5.0 Hz
+    rest_4.5hz.csv    -> 4.5 Hz
+Files with no frequency in the name are still analyzed (error column left empty).
+
+Usage:
+    python evaluate_recordings.py                         # uses ./recordings
+    python evaluate_recordings.py --folder recordings --module analyz_tremor
+Saves evaluation_summary.csv next to the script.
+"""
+import argparse
+import importlib
+import re
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+TOLERANCE_HZ = 0.3
+
+
+def load_analyzer(name):
+    candidates = [name] if name else ["tremor_analysis_v2", "analyz_tremor"]
+    for c in candidates:
+        try:
+            m = importlib.import_module(c)
+            if hasattr(m, "analyze") and hasattr(m, "longest_segment"):
+                return m
+        except ImportError:
+            continue
+    raise SystemExit("Could not import the analyzer. Use --module <file name without .py>.")
+
+
+def true_freq_from_name(stem):
+    s = stem.lower()
+    m = re.search(r"(\d+(?:\.\d+)?)\s*bpm", s)
+    if m:
+        return float(m.group(1)) / 60.0
+    m = re.search(r"(\d+(?:\.\d+)?)\s*hz", s)
+    if m:
+        return float(m.group(1))
+    return None
+
+
+def condition_from_name(stem, default="rest"):
+    s = stem.lower()
+    for c in ("rest", "postural", "kinetic"):
+        if c in s:
+            return c
+    return default
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--folder", type=Path, default=HERE / "recordings")
+    ap.add_argument("--module", default=None, help="analyzer module name (default: auto)")
+    a = ap.parse_args()
+
+    T = load_analyzer(a.module)
+    files = sorted(a.folder.glob("*.csv"))
+    if not files:
+        raise SystemExit(f"No CSV files in {a.folder}")
+
+    rows = []
+    for f in files:
+        truth = true_freq_from_name(f.stem)
+        row = {"file": f.name, "true_hz": truth}
+        try:
+            r = T.analyze(T.longest_segment(T.load_data(f)))
+            row.update(measured_hz=round(r["freq"], 2), reliable=bool(r["reliable"]),
+                       concentration=round(r["concentration"], 2), snr=round(r["snr"], 1),
+                       duration_s=round(r["duration"], 1), fs_hz=round(r["fs"], 1),
+                       rms_cm=None if r["rms_cm"] is None else round(r["rms_cm"], 3),
+                       warnings=" | ".join(r["warnings"]))
+            if truth is not None:
+                row["error_hz"] = round(r["freq"] - truth, 2)
+                if r["reliable"]:
+                    row["verdict"] = "OK" if abs(r["freq"] - truth) <= TOLERANCE_HZ else "WRONG (reliable but off)"
+                else:
+                    row["verdict"] = "rejected (inconclusive)"
+        except Exception as e:                      # one bad file must not stop the batch
+            row.update(verdict=f"ERROR: {e}")
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+    cols = ["file", "true_hz", "measured_hz", "error_hz", "reliable", "concentration",
+            "snr", "duration_s", "fs_hz", "verdict"]
+    cols = [c for c in cols if c in df.columns]
+    with pd.option_context("display.width", 200, "display.max_columns", 20, "display.max_colwidth", 40):
+        print(df[cols].to_string(index=False))
+
+    scored = df[df.get("true_hz").notna()] if "true_hz" in df else df.iloc[0:0]
+    if "verdict" in scored and len(scored):
+        ok = (scored["verdict"] == "OK").sum()
+        wrong = scored["verdict"].astype(str).str.startswith("WRONG").sum()
+        rej = scored["verdict"].astype(str).str.startswith("rejected").sum()
+        print(f"\nWith a known true frequency: {len(scored)} files")
+        print(f"  correct & reliable : {ok}")
+        print(f"  WRONG but reliable : {wrong}   <- the dangerous case; should be 0")
+        print(f"  rejected (inconclusive): {rej}")
+        m = scored[scored["verdict"] == "OK"]["error_hz"].abs()
+        if len(m):
+            print(f"  mean |error| on correct ones: {m.mean():.2f} Hz")
+    out = HERE / "evaluation_summary.csv"
+    df.to_csv(out, index=False)
+    print(f"\nSaved: {out}")
+
+
+if __name__ == "__main__":
+    main()
